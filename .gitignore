@@ -4,42 +4,54 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual Environments
+# Virtual environments
 
 venv/
-.venv/
 env/
+ENV/
+.venv/
 
-# Jupyter
+# Conda
 
-.ipynb_checkpoints/
+.envrc
 
 # VS Code
 
 .vscode/
 
+# Jupyter
+
+.ipynb_checkpoints/
+
 # Environment variables
 
 .env
 
-# Models
+# Logs
+
+*.log
+
+# Model artifacts
 
 models/*.pkl
-models/*.joblib
 
-# Data
+# Generated reports
 
-data/
+artifacts/generated_reports/
+
+# Temporary files
+
+artifacts/temp/
+
+# SHAP plots
+
+artifacts/shap_plots/
+
+# Extracted JSON
+
+artifacts/extracted_json/
 
 # OS files
 
 .DS_Store
 Thumbs.db
-
-# Database
-
-*.db
-
-# Logs
-
-*.log
