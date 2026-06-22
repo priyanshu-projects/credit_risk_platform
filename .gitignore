@@ -34,22 +34,20 @@ ENV/
 # Model artifacts
 
 models/*.pkl
+models/catboost_baseline.joblib
+models/lightgbm_baseline.joblib
 
-# Generated reports
+# Application artifacts and generated files
+artifacts/
 
-artifacts/generated_reports/
+# Large dataset files
+data/lendingclub/
+data/processed/features/*.parquet
 
-# Temporary files
+# Notebook-generated samples and training logs
 
-artifacts/temp/
-
-# SHAP plots
-
-artifacts/shap_plots/
-
-# Extracted JSON
-
-artifacts/extracted_json/
+notebooks/X_train_sample.csv
+notebooks/catboost_info/
 
 # OS files
 

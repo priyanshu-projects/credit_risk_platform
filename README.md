@@ -11,49 +11,35 @@ An end-to-end AI-powered credit risk assessment platform that combines:
 
 ## Tech Stack
 
-- Python
-- XGBoost
+- Python 3.12
 - Streamlit
+- scikit-learn + XGBoost
 - SHAP
-- PyMuPDF
-- EasyOCR
+- PyMuPDF + EasyOCR
 - Gemini Flash
-- GPT 4.1 mini
+- GPT-4.1 mini
+- ReportLab
 
 ## Workflow
 
-Loan PDF
-+
-Bank Statement PDF
+Loan PDF + Bank Statement PDF
 
-↓
+-> Document Extraction
 
-Document Extraction
+-> Feature Engineering
 
-↓
+-> Risk Prediction
 
-Feature Engineering
+-> Fraud Detection
 
-↓
+-> SHAP Explainability
 
-Risk Prediction
+-> LLM Underwriter Report
 
-↓
+-> PDF Export
 
-Fraud Detection
+-> Human Decision
 
-↓
+## Guardrail
 
-SHAP Explainability
-
-↓
-
-LLM Underwriter Report
-
-↓
-
-PDF Export
-
-↓
-
-Human Decision
+The LLM never approves or rejects loans. It only summarizes evidence for a human underwriter.

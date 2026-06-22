@@ -1,0 +1,21 @@
+{
+  "model_name": "xgboost_baseline",
+  "model_type": "XGBClassifier",
+  "selection_metric": "validation_roc_auc",
+  "best_params": {
+    "learning_rate": 0.03,
+    "max_depth": 5,
+    "n_estimators": 700
+  },
+  "best_cv_roc_auc": 0.7439,
+  "train_roc_auc": 0.7751145062593175,
+  "validation_roc_auc": 0.7459303926804028,
+  "test_roc_auc": 0.7425492154444394,
+  "feature_count": 123,
+  "training_rows": 273814,
+  "validation_rows": 58675,
+  "test_rows": 58675,
+  "positive_class": "Charged Off",
+  "negative_class": "Fully Paid",
+  "llm_guardrail": "The LLM never approves or rejects loans; it only summarizes evidence for a human underwriter."
+}
