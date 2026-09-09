@@ -142,13 +142,13 @@ class LoanExtractor:
         use_gemini: bool = True,
         api_key: Optional[str] = None,
     ):
-        load_dotenv()
+        load_dotenv(override=True)
         self.model_name = model_name or os.getenv("GEMINI_MODEL", self.DEFAULT_MODEL)
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+        self.api_key = (api_key or os.getenv("GEMINI_API_KEY") or "").strip()
         if not self.api_key:
             try:
                 import streamlit as st
-                self.api_key = st.secrets.get("GEMINI_API_KEY")
+                self.api_key = str(st.secrets.get("GEMINI_API_KEY", "")).strip()
             except Exception:
                 pass
         self.use_gemini = use_gemini and bool(self.api_key)
@@ -173,19 +173,23 @@ class LoanExtractor:
         if not text or not text.strip():
             raise ValueError("Cannot extract loan fields from empty text.")
 
+        actual_method = "regex_fallback"
         if self.use_gemini and self.client is not None:
             try:
                 extracted = self._extract_with_gemini(text)
+                actual_method = "gemini_flash"
             except Exception as exc:
                 logger.warning(
                     "Gemini extraction failed; using regex fallback. Error: %s",
                     exc,
                 )
                 extracted = self._extract_with_regex(text)
+                actual_method = "regex_fallback"
         else:
             extracted = self._extract_with_regex(text)
+            actual_method = "regex_fallback"
 
-        return self._normalize_result(extracted, source_text=text)
+        return self._normalize_result(extracted, source_text=text, extraction_method=actual_method)
 
     def extract_from_pdf(self, file_path: str | Path) -> Dict[str, Any]:
         """
@@ -265,7 +269,7 @@ Document text:
             cleaned = re.sub(r"\s*```$", "", cleaned)
         return json.loads(cleaned)
 
-    def _normalize_result(self, data: Dict[str, Any], source_text: str) -> Dict[str, Any]:
+    def _normalize_result(self, data: Dict[str, Any], source_text: str, extraction_method: str = "regex_fallback") -> Dict[str, Any]:
         normalized = {field: data.get(field) for field in self.FIELD_NAMES}
 
         for field in self.NUMERIC_FIELDS:
@@ -275,7 +279,7 @@ Document text:
 
         return {
             "document_type": "loan_application",
-            "extraction_method": "gemini_flash" if self.use_gemini else "regex_fallback",
+            "extraction_method": extraction_method,
             "fields": normalized,
             "missing_fields": missing_fields,
             "raw_text_char_count": len(source_text),
