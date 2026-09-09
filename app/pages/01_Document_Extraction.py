@@ -61,13 +61,23 @@ st.markdown("""
 </div>""", unsafe_allow_html=True)
 
 uploaded = st.file_uploader("Upload PDF", type=["pdf"])
-use_gemini = st.checkbox("Use Gemini for extraction", value=True)
+
+col_u1, col_u2 = st.columns([3, 1])
+with col_u1:
+    use_gemini = st.checkbox("Use Gemini for extraction", value=True)
+with col_u2:
+    if st.button("Re-run Extraction", use_container_width=True):
+        st.session_state.pop("extraction_result", None)
+        st.session_state.pop("last_uploaded_key", None)
+        st.rerun()
 
 if uploaded:
-    file_key = f"uploaded_{uploaded.name}_{uploaded.size}"
+    file_key = f"uploaded_{uploaded.name}_{uploaded.size}_{use_gemini}"
     is_new = st.session_state.get("last_uploaded_key") != file_key
+    cached_method = st.session_state.get("extraction_result", {}).get("extraction_method")
+    needs_upgrade = use_gemini and (cached_method == "regex_fallback" or cached_method is None)
 
-    if is_new or "extraction_result" not in st.session_state:
+    if is_new or "extraction_result" not in st.session_state or needs_upgrade:
         for key in ["risk_result", "features_df", "prob_default", "risk_tier", "fraud_report", "shap_factors", "llm_report", "rule_decision"]:
             st.session_state.pop(key, None)
 
@@ -75,14 +85,14 @@ if uploaded:
         tmp_path.parent.mkdir(parents=True, exist_ok=True)
         tmp_path.write_bytes(uploaded.read())
 
-        with st.spinner("Reading document..."):
+        with st.spinner("Extracting fields with Gemini..."):
             try:
                 extractor = LoanExtractor(use_gemini=use_gemini)
                 result = extractor.extract_from_pdf(str(tmp_path))
                 st.session_state["extraction_result"] = result
                 st.session_state["extracted_fields"]  = result.get("fields", {})
                 st.session_state["last_uploaded_key"] = file_key
-                st.switch_page("pages/01_Document_Extraction.py")
+                st.rerun()
             except Exception as e:
                 st.error(f"Extraction failed: {e}")
                 st.stop()
