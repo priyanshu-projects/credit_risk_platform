@@ -18,8 +18,9 @@ ENV/
 # Jupyter
 .ipynb_checkpoints/
 
-# Environment variables
+# Environment variables & secrets
 .env
+.streamlit/secrets.toml
 
 # Logs
 *.log
