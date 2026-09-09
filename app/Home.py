@@ -5,15 +5,13 @@ Home.py — Credit Risk Platform Landing Page
 import streamlit as st
 
 st.set_page_config(
-    page_title="AI Credit Risk Platform",
+    page_title="Credit Risk Platform",
     page_icon="🏦",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ── Wrapped Landing Page ──────────────────────────────────────────────────────
 def show_home():
-    # ── Custom CSS ────────────────────────────────────────────────────────────────
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
@@ -31,26 +29,15 @@ def show_home():
         color: #ffffff;
         font-size: 2.6rem;
         font-weight: 700;
-        margin: 0 0 8px 0;
+        margin: 0 0 10px 0;
         letter-spacing: -0.5px;
     }
     .hero p {
         color: #a8c8f0;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         margin: 0;
-        line-height: 1.6;
-    }
-    .badge {
-        display: inline-block;
-        background: rgba(255,255,255,0.12);
-        color: #7ec8f0;
-        border: 1px solid rgba(126,200,240,0.3);
-        border-radius: 20px;
-        padding: 4px 14px;
-        font-size: 0.78rem;
-        font-weight: 600;
-        margin: 4px 4px 12px 0;
-        letter-spacing: 0.5px;
+        line-height: 1.7;
+        max-width: 640px;
     }
     .pipeline-step {
         background: #f8fafd;
@@ -65,22 +52,15 @@ def show_home():
         border-left-color: #2e7bcf;
         transform: translateX(3px);
     }
-    .pipeline-step .step-num {
-        color: #2e7bcf;
-        font-weight: 700;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
     .pipeline-step .step-title {
         color: #1a2744;
         font-weight: 600;
-        font-size: 1rem;
-        margin: 2px 0;
+        font-size: 0.97rem;
+        margin: 0 0 2px 0;
     }
     .pipeline-step .step-desc {
         color: #5a6a7e;
-        font-size: 0.85rem;
+        font-size: 0.83rem;
     }
     .metric-card {
         background: white;
@@ -104,19 +84,6 @@ def show_home():
         margin-top: 6px;
         font-weight: 500;
     }
-    .guardrail-box {
-        background: #fff8e1;
-        border: 1px solid #ffe082;
-        border-radius: 10px;
-        padding: 16px 20px;
-        margin-top: 24px;
-    }
-    .guardrail-box p {
-        color: #7a5800;
-        font-size: 0.88rem;
-        margin: 0;
-        line-height: 1.6;
-    }
     .nav-hint {
         background: linear-gradient(90deg, #e8f1fa, #f0f6ff);
         border-radius: 10px;
@@ -132,17 +99,11 @@ def show_home():
     # ── Hero ──────────────────────────────────────────────────────────────────────
     st.markdown("""
     <div class="hero">
-      <div>
-        <span class="badge">🏦 PHASE 1 — COMPLETE</span>
-        <span class="badge">🤖 GEMINI FLASH</span>
-        <span class="badge">⚡ XGBOOST</span>
-        <span class="badge">🔍 SHAP</span>
-      </div>
-      <h1>AI-Assisted Credit Risk Platform</h1>
+      <h1>Credit Risk Platform</h1>
       <p>
-        Industry-grade loan underwriting pipeline combining Document AI,
-        ML Risk Modelling, Fraud Detection, Rule-based Decisioning,
-        Explainable AI, and LLM-generated Underwriter Reports.
+        An end-to-end loan underwriting pipeline — from raw PDF documents to a
+        structured underwriter report — combining machine learning, fraud detection,
+        and explainable AI.
       </p>
     </div>
     """, unsafe_allow_html=True)
@@ -154,14 +115,14 @@ def show_home():
         st.markdown("""
         <div class="metric-card">
           <div class="metric-val">0.742</div>
-          <div class="metric-label">XGBoost Test ROC-AUC</div>
+          <div class="metric-label">Model ROC-AUC</div>
         </div>""", unsafe_allow_html=True)
 
     with col2:
         st.markdown("""
         <div class="metric-card">
           <div class="metric-val">391K</div>
-          <div class="metric-label">Training Samples</div>
+          <div class="metric-label">Training Loans</div>
         </div>""", unsafe_allow_html=True)
 
     with col3:
@@ -174,98 +135,81 @@ def show_home():
     with col4:
         st.markdown("""
         <div class="metric-card">
-          <div class="metric-val">10</div>
-          <div class="metric-label">Fraud Detection Rules</div>
+          <div class="metric-val">13</div>
+          <div class="metric-label">Fraud Checks</div>
         </div>""", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── Pipeline overview ─────────────────────────────────────────────────────────
+    # ── Pipeline overview + Navigation ───────────────────────────────────────────
     col_left, col_right = st.columns([1.1, 1])
 
     with col_left:
-        st.subheader("📋 Processing Pipeline")
+        st.subheader("How it works")
 
         steps = [
-            ("01", "Document Processing",    "PyMuPDF + EasyOCR — native PDF or scanned fallback"),
-            ("02", "Document AI Extraction", "Gemini Flash extracts 35+ structured loan fields"),
-            ("03", "Feature Engineering",    "Maps extracted fields → 123 XGBoost features"),
-            ("04", "ML Risk Model",          "Tuned XGBoost predicts probability of default"),
-            ("05", "Fraud Detection",        "10 deterministic rules flag income / behaviour anomalies"),
-            ("06", "Rule Engine",            "Credit policy: DECLINE / REFER / REVIEW / AUTO-APPROVE"),
-            ("07", "SHAP Explainability",    "Top risk drivers and mitigators for each decision"),
-            ("08", "LLM Underwriter Report", "GPT-4.1 mini / Gemini Flash writes the final narrative"),
+            ("Document Processing",    "PyMuPDF + EasyOCR — reads native PDFs or scanned fallback"),
+            ("Field Extraction",       "Gemini Flash pulls 35+ structured fields from the document text"),
+            ("Feature Engineering",    "Maps extracted fields to the 123 features the model expects"),
+            ("Risk Scoring",           "XGBoost predicts the probability of default"),
+            ("Fraud Detection",        "13 rule-based checks flag income or behaviour anomalies"),
+            ("Policy Decision",        "Credit policy engine routes: Decline / Refer / Review / Approve"),
+            ("Explainability",         "SHAP shows which factors drove the score up or down"),
+            ("Underwriter Report",     "GPT-4.1 mini writes the final narrative for the underwriter"),
         ]
 
-        for num, title, desc in steps:
+        for title, desc in steps:
             st.markdown(f"""
             <div class="pipeline-step">
-              <div class="step-num">Step {num}</div>
               <div class="step-title">{title}</div>
               <div class="step-desc">{desc}</div>
             </div>""", unsafe_allow_html=True)
 
     with col_right:
-        st.subheader("🗺️ Navigation")
+        st.subheader("Pages")
         st.markdown("""
-        Use the **sidebar** to navigate between pages:
-
         | Page | What you can do |
         |---|---|
         | 📄 Document Extraction | Upload a loan PDF and extract fields |
-        | 📊 Risk Assessment | Run the ML model and see risk score |
-        | 🚨 Fraud Analysis | View all fraud flags raised |
+        | 📊 Risk Assessment | Run the model and see the risk score |
+        | 🚨 Fraud Analysis | View any fraud flags raised |
         | 🔍 Explainability | SHAP waterfall — why this score? |
         | 📝 Report Generation | Generate the full underwriter report |
         """)
 
         st.markdown("""
         <div class="nav-hint">
-          💡 <strong>Quick Start:</strong> Upload a loan application PDF on the
-          <em>Document Extraction</em> page — the platform will run the full
-          pipeline automatically.
+          Start by uploading a loan application PDF on the <strong>Document Extraction</strong> page.
+          The platform runs each step in sequence automatically.
         </div>""", unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.subheader("🛠️ Tech Stack")
+        st.subheader("Tech Stack")
 
         tech = {
-            "Risk Model":    "XGBoost (GridSearchCV tuned)",
-            "Explainability":"SHAP TreeExplainer",
-            "Document AI":  "Gemini Flash (extraction)",
-            "LLM Reports":  "GPT-4.1 mini / Gemini Flash",
-            "OCR":          "EasyOCR + PyMuPDF",
-            "Frontend":     "Streamlit",
-            "PDF Output":   "ReportLab",
+            "Risk Model":     "XGBoost",
+            "Explainability": "SHAP TreeExplainer",
+            "Document AI":    "Gemini Flash",
+            "Report Writer":  "GPT-4.1 mini / Gemini Flash",
+            "OCR":            "EasyOCR + PyMuPDF",
+            "Frontend":       "Streamlit",
+            "PDF Export":     "ReportLab",
         }
         for k, v in tech.items():
             st.markdown(f"**{k}:** {v}")
 
-    # ── Guardrail ─────────────────────────────────────────────────────────────────
-    st.markdown("""
-    <div class="guardrail-box">
-      <p>
-        ⚠️ <strong>Guardrail Notice:</strong>
-        This platform is designed so that <strong>no LLM ever approves or rejects a loan.</strong>
-        The ML model and rule engine produce risk signals and routing decisions.
-        The LLM summarises findings only. All final credit decisions require a
-        qualified human underwriter.
-      </p>
-    </div>""", unsafe_allow_html=True)
 
-
-# ── Progressive Navigation Setup (Streamlit 1.35.0+) ──────────────────────────
-home_page = st.Page(show_home, title="Home", icon="🏠", default=True)
-doc_page = st.Page("pages/01_Document_Extraction.py", title="Document Extraction", icon="📄")
-risk_page = st.Page("pages/02_Risk_Assessment.py", title="Risk Assessment", icon="📊")
-fraud_page = st.Page("pages/03_Fraud_Analysis.py", title="Fraud Analysis", icon="🚨")
-explain_page = st.Page("pages/04_Explainability.py", title="Explainability", icon="🔍")
-report_page = st.Page("pages/05_Report_Generation.py", title="Report Generation", icon="📝")
+# ── Navigation ─────────────────────────────────────────────────────────────────
+home_page    = st.Page(show_home, title="Home", icon="🏠", default=True)
+doc_page     = st.Page("pages/01_Document_Extraction.py", title="Document Extraction", icon="📄")
+risk_page    = st.Page("pages/02_Risk_Assessment.py",     title="Risk Assessment",     icon="📊")
+fraud_page   = st.Page("pages/03_Fraud_Analysis.py",      title="Fraud Analysis",      icon="🚨")
+explain_page = st.Page("pages/04_Explainability.py",      title="Explainability",      icon="🔍")
+report_page  = st.Page("pages/05_Report_Generation.py",   title="Report Generation",   icon="📝")
 
 try:
-    # Build list of active pages based on state
     active_pages = [home_page, doc_page]
-    
+
     if "extraction_result" in st.session_state:
         active_pages.append(risk_page)
     if "features_df" in st.session_state:
@@ -274,9 +218,8 @@ try:
         active_pages.append(explain_page)
     if "shap_factors" in st.session_state:
         active_pages.append(report_page)
-        
+
     pg = st.navigation(active_pages)
     pg.run()
 except AttributeError:
-    # Fallback for older Streamlit versions
     show_home()

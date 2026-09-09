@@ -32,7 +32,6 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 .risk-prob  { font-size: 4rem; font-weight: 800; letter-spacing: -2px; line-height: 1; }
-.risk-label { font-size: 0.9rem; opacity: 0.8; margin-top: 4px; }
 .risk-tier  { font-size: 1.4rem; font-weight: 700; margin-top: 12px; border-radius: 8px; display: inline-block; padding: 4px 20px; }
 
 .tier-low       { background: #e8f5e9; color: #27ae60; }
@@ -71,7 +70,7 @@ st.markdown("""
 
 # ── Require extraction ────────────────────────────────────────────────────────
 if "extraction_result" not in st.session_state:
-    st.warning("⚠️ No document extracted yet. Please go to **Document Extraction** first.")
+    st.warning("No document extracted yet. Please go to **Document Extraction** first.")
     st.stop()
 
 extraction_result = st.session_state["extraction_result"]
@@ -79,7 +78,7 @@ fields            = extraction_result.get("fields", {})
 
 # ── Run model ─────────────────────────────────────────────────────────────────
 if "risk_result" not in st.session_state or "features_df" not in st.session_state:
-    with st.spinner("⚙️ Running feature engineering and risk model..."):
+    with st.spinner("Running model..."):
         try:
             engineer  = FeatureEngineer()
             predictor = RiskModelPredictor(
@@ -127,7 +126,6 @@ col_gauge, col_detail = st.columns([1, 1.6])
 with col_gauge:
     st.markdown(f"""
     <div class="risk-gauge gauge-{tier_key}">
-      <div class="risk-label">PROBABILITY OF DEFAULT</div>
       <div class="risk-prob">{prob:.1%}</div>
       <div>
         <span class="risk-tier tier-{tier_key}">{tier} Risk</span>
@@ -137,8 +135,7 @@ with col_gauge:
     # Thresholds explainer
     st.markdown("""
     <div class="info-card">
-      <h4>🎯 Risk Tier (P(Default) Bands)</h4>
-      <p style="color:#6b7c93;font-size:0.8rem;margin:0 0 10px;">What probability of default range puts an applicant in each tier:</p>
+      <h4>Risk Tiers</h4>
     """, unsafe_allow_html=True)
 
     thresholds = [
@@ -154,7 +151,7 @@ with col_gauge:
     st.markdown("</div>", unsafe_allow_html=True)
 
 with col_detail:
-    st.subheader("📋 Key Application Metrics")
+    st.subheader("Application Summary")
 
     display_fields = {
         "Applicant Name":        fields.get("applicant_name"),
@@ -171,28 +168,17 @@ with col_detail:
         "Delinquencies (2yr)":   fields.get("delinquencies_2yrs"),
     }
 
-    st.markdown('<div class="info-card"><h4>Application Fields</h4>', unsafe_allow_html=True)
+    st.markdown('<div class="info-card"><h4>Extracted Fields</h4>', unsafe_allow_html=True)
     for label, val in display_fields.items():
         if val is not None:
             st.markdown(f'<div class="feature-row"><span class="feat-name">{label}</span><span class="feat-val">{val}</span></div>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown('<div class="info-card"><h4>⚙️ Model Details</h4>', unsafe_allow_html=True)
-    model_meta = [
-        ("Model",         result.get("model_version", "tuned_xgboost_v1")),
-        ("Features Used", f"{features_df.shape[1]}"),   # now 123 after alignment
-        ("Training Rows", "391,164"),
-        ("Test ROC-AUC",  "0.742"),
-    ]
-    for label, val in model_meta:
-        st.markdown(f'<div class="feature-row"><span class="feat-name">{label}</span><span class="feat-val">{val}</span></div>', unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
 st.markdown("<br>", unsafe_allow_html=True)
 col_nav1, col_nav2 = st.columns(2)
 with col_nav1:
-    if st.button("🚨 Proceed to Fraud Analysis", type="secondary", use_container_width=True):
+    if st.button("Fraud Analysis →", type="secondary", use_container_width=True):
         st.switch_page("pages/03_Fraud_Analysis.py")
 with col_nav2:
-    if st.button("🔍 Proceed to Explainability (SHAP)", type="primary", use_container_width=True):
+    if st.button("Explainability (SHAP) →", type="primary", use_container_width=True):
         st.switch_page("pages/04_Explainability.py")

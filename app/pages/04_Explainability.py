@@ -71,7 +71,7 @@ prob        = st.session_state.get("prob_default", 0.0)
 tier        = st.session_state.get("risk_tier", "Unknown")
 
 # ── Load model + compute SHAP ─────────────────────────────────────────────────
-with st.spinner("🧮 Computing SHAP values..."):
+with st.spinner("Computing SHAP values..."):
     try:
         predictor = RiskModelPredictor(
             model_path="models/xgboost_baseline.joblib",
@@ -141,10 +141,10 @@ with st.spinner("🧮 Computing SHAP values..."):
         st.stop()
 
 # ── Waterfall chart ───────────────────────────────────────────────────────────
-st.subheader("📉 SHAP Waterfall Chart")
-st.caption("Red bars push the risk score UP; green bars push it DOWN.")
+st.subheader("SHAP Waterfall Chart")
+st.caption("Red bars push the risk score up; green bars push it down.")
 
-with st.spinner("Rendering waterfall..."):
+with st.spinner("Rendering chart..."):
     try:
         fig, ax = plt.subplots(figsize=(10, 6))
         fig.patch.set_facecolor("#fafbfc")
@@ -172,7 +172,7 @@ def _bar(shap_val: float, max_val: float) -> str:
     return f'<div class="bar-fill {cls}" style="width:{width}px;"></div>'
 
 with col_d:
-    st.markdown('<div class="info-card"><h4>🔴 Top Risk Drivers (push score UP)</h4>', unsafe_allow_html=True)
+    st.markdown('<div class="info-card"><h4>Top Risk Drivers</h4>', unsafe_allow_html=True)
     if drivers:
         for name, val, shap_val in sorted(drivers, key=lambda x: -x[2])[:8]:
             display_val = f"{val:.2f}" if isinstance(val, float) else str(val)
@@ -188,7 +188,7 @@ with col_d:
     st.markdown("</div>", unsafe_allow_html=True)
 
 with col_m:
-    st.markdown('<div class="info-card"><h4>🟢 Top Mitigators (push score DOWN)</h4>', unsafe_allow_html=True)
+    st.markdown('<div class="info-card"><h4>Top Mitigators</h4>', unsafe_allow_html=True)
     if mitigators:
         for name, val, shap_val in sorted(mitigators, key=lambda x: x[2])[:8]:
             display_val = f"{val:.2f}" if isinstance(val, float) else str(val)
@@ -205,7 +205,7 @@ with col_m:
 
 # ── Base value explainer ──────────────────────────────────────────────────────
 st.markdown("<br>", unsafe_allow_html=True)
-with st.expander("ℹ️ How to read this chart"):
+with st.expander("How to read this chart"):
     st.markdown(f"""
     - **Base value** `{base_val:.4f}`: The model's expected log-odds output across all training samples
     - **Red bars** (positive SHAP): These features **increased** this applicant's default probability
@@ -215,5 +215,5 @@ with st.expander("ℹ️ How to read this chart"):
     """)
 
 st.markdown("<br>", unsafe_allow_html=True)
-if st.button("📝 Proceed to Report Generation", type="primary", use_container_width=True):
+if st.button("Report Generation →", type="primary", use_container_width=True):
     st.switch_page("pages/05_Report_Generation.py")

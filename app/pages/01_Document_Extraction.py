@@ -89,7 +89,7 @@ if uploaded:
         tmp_path.parent.mkdir(parents=True, exist_ok=True)
         tmp_path.write_bytes(uploaded.read())
 
-        with st.spinner("🔍 Extracting fields from document..."):
+        with st.spinner("Extracting fields from document..."):
             try:
                 extractor = LoanExtractor(use_gemini=use_gemini)
                 result = extractor.extract_from_pdf(str(tmp_path))
@@ -102,12 +102,12 @@ if uploaded:
                 st.stop()
 
     result = st.session_state["extraction_result"]
-    st.success("✅ Extraction complete!")
+    st.success("Extraction complete.")
 
     # ── Method badge ──────────────────────────────────────────────────────────
     method = result.get("extraction_method", "unknown")
     badge_cls = "badge-gemini" if "gemini" in method else "badge-regex"
-    badge_txt = "🤖 Gemini Flash" if "gemini" in method else "🔧 Regex Fallback"
+    badge_txt = "Gemini Flash" if "gemini" in method else "Regex Fallback"
     st.markdown(f'<span class="method-badge {badge_cls}">{badge_txt}</span>',
                 unsafe_allow_html=True)
 
@@ -151,26 +151,22 @@ if uploaded:
 
     # ── Missing fields ────────────────────────────────────────────────────────
     if missing_list:
-        st.markdown("**⚠️ Missing fields:**")
+        st.markdown("**Missing fields:**")
         pills = " ".join(f'<span class="missing-pill">{m}</span>' for m in missing_list)
         st.markdown(pills, unsafe_allow_html=True)
 
     # ── Raw JSON ──────────────────────────────────────────────────────────────
-    with st.expander("🔎 Raw extraction result (JSON)"):
+    with st.expander("Raw extraction result (JSON)"):
         st.json(result)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("👉 Proceed to Risk Assessment", type="primary", use_container_width=True):
+    if st.button("Proceed to Risk Assessment →", type="primary", use_container_width=True):
         st.switch_page("pages/02_Risk_Assessment.py")
 
 else:
     st.markdown("""
-    ### How it works
-    1. Upload any loan application PDF (native or scanned)
-    2. PyMuPDF attempts native text extraction first
-    3. If scanned — EasyOCR kicks in automatically
-    4. Gemini Flash reads the text and returns structured JSON
-    5. Results are passed to the Risk Model on the next page
+    Upload any loan application PDF above. The platform will extract all available fields
+    automatically and pass them through the full pipeline.
     """)
 
     # Show sample documents available
@@ -178,7 +174,6 @@ else:
     if sample_dir.exists():
         samples = list(sample_dir.glob("*.pdf"))
         if samples:
-            st.subheader("📁 Sample Documents Available")
+            st.subheader("Sample Documents")
             for s in samples:
                 st.markdown(f"- `{s.name}`")
-            st.caption("You can load these manually by copying the path above.")

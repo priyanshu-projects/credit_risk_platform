@@ -74,7 +74,7 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 st.markdown("""
 <div class="page-header">
   <h2>🚨 Fraud Analysis</h2>
-  <p>10 deterministic rules check for income inflation, behavioural anomalies, and data inconsistencies.</p>
+  <p>13 rule-based checks scan for income anomalies, behavioural signals, and data inconsistencies.</p>
 </div>""", unsafe_allow_html=True)
 
 # ── Require extraction ────────────────────────────────────────────────────────
@@ -106,16 +106,13 @@ with col_level:
     emoji = {"clear": "✅", "low": "🔵", "medium": "🟡", "high": "🔴"}.get(level, "⚠️")
     st.markdown(f"""
     <div class="risk-level-box level-{level}">
-      <div class="level-sub">FRAUD RISK LEVEL</div>
+      <div class="level-sub">Fraud Risk</div>
       <div class="level-name">{emoji} {report.fraud_risk_level}</div>
       <div class="level-sub">{len(flags)} flag(s) raised</div>
     </div>""", unsafe_allow_html=True)
 
-    # Guardrail
-    st.info("🛡️ Fraud signals are **advisory only**. No loan decisions are made here.")
-
 with col_counts:
-    st.subheader("📊 Flags by Severity")
+    st.subheader("Flags by Severity")
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown(f'<div class="count-pill pill-high">🔴 HIGH<br>{counts["high"]}</div>', unsafe_allow_html=True)
@@ -125,7 +122,7 @@ with col_counts:
         st.markdown(f'<div class="count-pill pill-low">🔵 LOW<br>{counts["low"]}</div>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.subheader("📋 Checks Run")
+    st.subheader("Checks Run")
 
     # check_name from FraudFlag maps to these display names
     check_name_map = {
@@ -162,7 +159,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 if not flags:
     st.success("✅ No fraud flags raised — clean application profile.")
 else:
-    st.subheader(f"🚩 {len(flags)} Flag(s) Raised")
+    st.subheader(f"{len(flags)} Flag(s) Raised")
 
     # Sort: high first
     severity_order = {"high": 0, "medium": 1, "low": 2}
@@ -185,5 +182,5 @@ else:
         </div>""", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
-if st.button("🔍 Proceed to Explainability (SHAP)", type="primary", use_container_width=True):
+if st.button("Explainability (SHAP) →", type="primary", use_container_width=True):
     st.switch_page("pages/04_Explainability.py")

@@ -85,7 +85,7 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 st.markdown("""
 <div class="page-header">
   <h2>📝 Report Generation</h2>
-  <p>Rule Engine applies credit policy → Gemini Flash writes the structured underwriter report.</p>
+  <p>Credit policy engine routes the application — then the LLM writes the underwriter narrative.</p>
 </div>""", unsafe_allow_html=True)
 
 # ── Require prior steps ───────────────────────────────────────────────────────
@@ -149,7 +149,6 @@ with col_verdict:
     </div>""", unsafe_allow_html=True)
 
 with col_inputs:
-    st.markdown("**📥 Inputs to Rule Engine:**")
     st.markdown('<div class="input-summary">', unsafe_allow_html=True)
     rows = {
         "P(Default)":         f"{prob_default:.2%}",
@@ -168,7 +167,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 # ── Generate LLM report ───────────────────────────────────────────────────────
 st.subheader("📄 Underwriter Report")
 
-generate_btn = st.button("🤖 Generate LLM Underwriter Report", type="primary", use_container_width=True)
+generate_btn = st.button("Generate Underwriter Report", type="primary", use_container_width=True)
 
 if "llm_report" in st.session_state:
     generate_btn = True  # Auto-show if already generated
@@ -211,12 +210,6 @@ if generate_btn:
           <div class="section-body">{content}</div>
         </div>""", unsafe_allow_html=True)
 
-    # ── Guardrail ─────────────────────────────────────────────────────────────
-    st.markdown(f"""
-    <div class="guardrail-strip">
-      <p>⚠️ <strong>Guardrail Notice:</strong> {report.guardrail}</p>
-    </div>""", unsafe_allow_html=True)
-
     st.markdown("<br>", unsafe_allow_html=True)
 
     # ── PDF download ──────────────────────────────────────────────────────────
@@ -225,7 +218,7 @@ if generate_btn:
     col_dl, col_info = st.columns([1, 1.5])
 
     with col_dl:
-        if st.button("📄 Generate PDF", type="secondary", use_container_width=True):
+        if st.button("Generate PDF", type="secondary", use_container_width=True):
             with st.spinner("Rendering PDF..."):
                 try:
                     renderer = PDFReportRenderer()
@@ -246,13 +239,7 @@ if generate_btn:
                     st.error(f"PDF error: {e}")
 
     with col_info:
-        st.markdown("""
-        **PDF includes:**
-        - Professional header with platform branding
-        - Colour-coded rule verdict badge
-        - All four report sections
-        - Guardrail disclaimer on every page
-        """)
+        st.markdown("PDF includes all four report sections with a colour-coded verdict badge.")
 
     # ── Raw JSON ──────────────────────────────────────────────────────────────
     with st.expander("🔎 Raw report JSON"):
