@@ -256,6 +256,15 @@ class LLMReportGenerator:
     def __init__(self):
         self.openai_key = os.getenv("OPENAI_API_KEY", "").strip()
         self.gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+        if not self.openai_key or not self.gemini_key:
+            try:
+                import streamlit as st
+                if not self.openai_key:
+                    self.openai_key = str(st.secrets.get("OPENAI_API_KEY", "")).strip()
+                if not self.gemini_key:
+                    self.gemini_key = str(st.secrets.get("GEMINI_API_KEY", "")).strip()
+            except Exception:
+                pass
         self._provider  = None  # set on first generate()
 
     def _use_openai(self) -> bool:

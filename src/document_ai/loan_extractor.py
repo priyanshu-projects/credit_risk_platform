@@ -145,6 +145,12 @@ class LoanExtractor:
         load_dotenv()
         self.model_name = model_name or os.getenv("GEMINI_MODEL", self.DEFAULT_MODEL)
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+        if not self.api_key:
+            try:
+                import streamlit as st
+                self.api_key = st.secrets.get("GEMINI_API_KEY")
+            except Exception:
+                pass
         self.use_gemini = use_gemini and bool(self.api_key)
         self.client = None
 

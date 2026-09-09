@@ -35,13 +35,6 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 .field-value { color: #1a2744; font-size: 0.9rem; font-weight: 500; text-align: right; }
 .field-null  { color: #c0c8d4; font-size: 0.82rem; font-style: italic; }
 
-.method-badge {
-    display: inline-block; border-radius: 20px; padding: 3px 12px;
-    font-size: 0.76rem; font-weight: 600; letter-spacing: 0.4px; margin-bottom: 12px;
-}
-.badge-gemini { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
-.badge-regex  { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
-
 .stat-box {
     background: #f0f6ff; border-radius: 10px; padding: 16px 20px;
     border: 1px solid #c5d9f0; text-align: center;
@@ -58,9 +51,7 @@ st.markdown("""
 </div>""", unsafe_allow_html=True)
 
 uploaded = st.file_uploader("Upload PDF", type=["pdf"])
-
-use_gemini = st.checkbox("Use Gemini for extraction", value=True,
-                         help="Uncheck to use regex fallback instead")
+use_gemini = True
 
 if uploaded:
     file_key = f"uploaded_{uploaded.name}_{uploaded.size}"
@@ -88,11 +79,6 @@ if uploaded:
 
     result = st.session_state["extraction_result"]
     st.success("Done.")
-
-    method = result.get("extraction_method", "unknown")
-    badge_cls = "badge-gemini" if "gemini" in method else "badge-regex"
-    badge_txt = "Gemini" if "gemini" in method else "Regex"
-    st.markdown(f'<span class="method-badge {badge_cls}">{badge_txt}</span>', unsafe_allow_html=True)
 
     fields = result.get("fields", {})
     total  = len(fields)
