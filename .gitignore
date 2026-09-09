@@ -1,38 +1,30 @@
 # Python
-
 __pycache__/
 *.py[cod]
 *$py.class
 
 # Virtual environments
-
 venv/
 env/
 ENV/
 .venv/
 
 # Conda
-
 .envrc
 
 # VS Code
-
 .vscode/
 
 # Jupyter
-
 .ipynb_checkpoints/
 
 # Environment variables
-
 .env
 
 # Logs
-
 *.log
 
 # Model artifacts
-
 models/*.pkl
 models/catboost_baseline.joblib
 models/lightgbm_baseline.joblib
@@ -45,11 +37,13 @@ data/lendingclub/
 data/processed/features/*.parquet
 
 # Notebook-generated samples and training logs
-
 notebooks/X_train_sample.csv
 notebooks/catboost_info/
 
 # OS files
-
 .DS_Store
 Thumbs.db
+
+# AI assistant config (not for public)
+GEMINI.md
+.agents/
