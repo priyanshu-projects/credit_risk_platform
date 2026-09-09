@@ -1,9 +1,7 @@
 """
 01_Document_Extraction.py
-Upload a loan application PDF and extract structured fields via Document AI.
 """
 
-import json
 import sys
 from pathlib import Path
 
@@ -22,74 +20,61 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 
 .page-header {
     background: linear-gradient(135deg, #0f2744, #1a4a7a);
-    border-radius: 12px; padding: 28px 32px; margin-bottom: 28px;
-    color: white;
+    border-radius: 12px; padding: 28px 32px; margin-bottom: 28px; color: white;
 }
 .page-header h2 { margin: 0; font-size: 1.8rem; font-weight: 700; }
-.page-header p  { margin: 6px 0 0; color: #a8c8f0; font-size: 0.95rem; }
+.page-header p  { margin: 6px 0 0; color: #a8c8f0; font-size: 0.9rem; }
 
 .field-card {
     background: white; border-radius: 10px; padding: 12px 16px;
-    margin-bottom: 8px; border: 1px solid #e8edf4;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    margin-bottom: 6px; border: 1px solid #e8edf4;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     display: flex; justify-content: space-between; align-items: center;
 }
-.field-name  { color: #4a5a6e; font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-.field-value { color: #1a2744; font-size: 0.95rem; font-weight: 500; text-align: right; }
-.field-null  { color: #b0b8c4; font-size: 0.85rem; font-style: italic; }
+.field-name  { color: #4a5a6e; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.field-value { color: #1a2744; font-size: 0.9rem; font-weight: 500; text-align: right; }
+.field-null  { color: #c0c8d4; font-size: 0.82rem; font-style: italic; }
 
 .method-badge {
-    display: inline-block; border-radius: 20px; padding: 4px 14px;
-    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.5px;
+    display: inline-block; border-radius: 20px; padding: 3px 12px;
+    font-size: 0.76rem; font-weight: 600; letter-spacing: 0.4px; margin-bottom: 12px;
 }
 .badge-gemini { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
 .badge-regex  { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
 
-.missing-pill {
-    background: #fff8e1; color: #7a5800; border-radius: 6px;
-    padding: 2px 10px; font-size: 0.78rem; margin: 2px; display: inline-block;
-}
 .stat-box {
     background: #f0f6ff; border-radius: 10px; padding: 16px 20px;
     border: 1px solid #c5d9f0; text-align: center;
 }
 .stat-num { font-size: 1.8rem; font-weight: 700; color: #1a4a7a; }
-.stat-lbl { color: #6b7c93; font-size: 0.82rem; margin-top: 2px; }
+.stat-lbl { color: #6b7c93; font-size: 0.8rem; margin-top: 2px; }
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown("""
 <div class="page-header">
-  <h2>📄 Document Extraction</h2>
-  <p>Upload a loan application PDF — Gemini Flash extracts 35+ structured fields automatically.</p>
+  <h2>Document Extraction</h2>
+  <p>Upload a loan application PDF to extract all structured fields.</p>
 </div>""", unsafe_allow_html=True)
 
-# ── Upload ────────────────────────────────────────────────────────────────────
-uploaded = st.file_uploader(
-    "Upload loan application PDF",
-    type=["pdf"],
-    help="Supports native digital PDFs and scanned documents (OCR fallback).",
-)
+uploaded = st.file_uploader("Upload PDF", type=["pdf"])
 
-use_gemini = st.checkbox("Use Gemini Flash for extraction", value=True,
-                         help="Uncheck to use deterministic regex fallback (no API call)")
+use_gemini = st.checkbox("Use Gemini for extraction", value=True,
+                         help="Uncheck to use regex fallback instead")
 
 if uploaded:
-    # Detect if it's a new file upload
     file_key = f"uploaded_{uploaded.name}_{uploaded.size}"
     is_new = st.session_state.get("last_uploaded_key") != file_key
 
     if is_new or "extraction_result" not in st.session_state:
-        # Clear previous pipeline state to force re-evaluation of subsequent steps
         for key in ["risk_result", "features_df", "prob_default", "risk_tier", "fraud_report", "shap_factors", "llm_report", "rule_decision"]:
             st.session_state.pop(key, None)
 
-        # Save to temp path
         tmp_path = Path("artifacts/tmp_upload.pdf")
         tmp_path.parent.mkdir(parents=True, exist_ok=True)
         tmp_path.write_bytes(uploaded.read())
 
-        with st.spinner("Extracting fields from document..."):
+        with st.spinner("Reading document..."):
             try:
                 extractor = LoanExtractor(use_gemini=use_gemini)
                 result = extractor.extract_from_pdf(str(tmp_path))
@@ -102,16 +87,13 @@ if uploaded:
                 st.stop()
 
     result = st.session_state["extraction_result"]
-    st.success("Extraction complete.")
+    st.success("Done.")
 
-    # ── Method badge ──────────────────────────────────────────────────────────
     method = result.get("extraction_method", "unknown")
     badge_cls = "badge-gemini" if "gemini" in method else "badge-regex"
-    badge_txt = "Gemini Flash" if "gemini" in method else "Regex Fallback"
-    st.markdown(f'<span class="method-badge {badge_cls}">{badge_txt}</span>',
-                unsafe_allow_html=True)
+    badge_txt = "Gemini" if "gemini" in method else "Regex"
+    st.markdown(f'<span class="method-badge {badge_cls}">{badge_txt}</span>', unsafe_allow_html=True)
 
-    # ── Summary stats ─────────────────────────────────────────────────────────
     fields = result.get("fields", {})
     total  = len(fields)
     filled = sum(1 for v in fields.values() if v is not None and v != "")
@@ -127,7 +109,6 @@ if uploaded:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── Field display ─────────────────────────────────────────────────────────
     col_a, col_b = st.columns(2)
     field_items = list(fields.items())
     half = (len(field_items) + 1) // 2
@@ -146,34 +127,23 @@ if uploaded:
                     st.markdown(f"""
                     <div class="field-card">
                       <span class="field-name">{name.replace('_', ' ')}</span>
-                      <span class="field-null">— not found —</span>
+                      <span class="field-null">not found</span>
                     </div>""", unsafe_allow_html=True)
 
-    # ── Missing fields ────────────────────────────────────────────────────────
-    if missing_list:
-        st.markdown("**Missing fields:**")
-        pills = " ".join(f'<span class="missing-pill">{m}</span>' for m in missing_list)
-        st.markdown(pills, unsafe_allow_html=True)
-
-    # ── Raw JSON ──────────────────────────────────────────────────────────────
-    with st.expander("Raw extraction result (JSON)"):
+    with st.expander("Raw JSON"):
         st.json(result)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("Proceed to Risk Assessment →", type="primary", use_container_width=True):
+    if st.button("Next: Risk Assessment", type="primary", use_container_width=True):
         st.switch_page("pages/02_Risk_Assessment.py")
 
 else:
-    st.markdown("""
-    Upload any loan application PDF above. The platform will extract all available fields
-    automatically and pass them through the full pipeline.
-    """)
+    st.markdown("Upload a loan application PDF above to get started.")
 
-    # Show sample documents available
     sample_dir = Path("sample_documents/loan_forms")
     if sample_dir.exists():
         samples = list(sample_dir.glob("*.pdf"))
         if samples:
-            st.subheader("Sample Documents")
+            st.markdown("**Sample files available:**")
             for s in samples:
                 st.markdown(f"- `{s.name}`")

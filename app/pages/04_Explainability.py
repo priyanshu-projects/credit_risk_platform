@@ -1,6 +1,5 @@
 """
 04_Explainability.py
-SHAP waterfall chart — why did the model give this score?
 """
 
 import sys
@@ -27,7 +26,7 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     border-radius: 12px; padding: 28px 32px; margin-bottom: 28px; color: white;
 }
 .page-header h2 { margin: 0; font-size: 1.8rem; font-weight: 700; }
-.page-header p  { margin: 6px 0 0; color: #a8f0b0; font-size: 0.95rem; }
+.page-header p  { margin: 6px 0 0; color: #a8f0b0; font-size: 0.9rem; }
 
 .driver-row {
     display: flex; align-items: center; padding: 10px 14px;
@@ -38,8 +37,8 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 .bar-pos { background: linear-gradient(90deg, #e74c3c, #c0392b); }
 .bar-neg { background: linear-gradient(90deg, #27ae60, #2ecc71); }
 .driver-label { color: #1a2744; font-size: 0.85rem; min-width: 200px; }
-.driver-val   { color: #6b7c93; font-size: 0.82rem; font-family: monospace; min-width: 80px; }
-.driver-shap  { font-weight: 700; font-size: 0.9rem; min-width: 70px; text-align: right; }
+.driver-val   { color: #6b7c93; font-size: 0.8rem; font-family: monospace; min-width: 80px; }
+.driver-shap  { font-weight: 700; font-size: 0.88rem; min-width: 70px; text-align: right; }
 .shap-pos { color: #c0392b; }
 .shap-neg { color: #27ae60; }
 
@@ -53,24 +52,22 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 
 st.markdown("""
 <div class="page-header">
-  <h2>🔍 SHAP Explainability</h2>
-  <p>TreeExplainer shows which features drove the risk score up or down for this specific applicant.</p>
+  <h2>Explainability</h2>
+  <p>Which factors pushed the risk score up or down for this applicant.</p>
 </div>""", unsafe_allow_html=True)
 
-# ── Require prior steps ───────────────────────────────────────────────────────
 if "extraction_result" not in st.session_state:
-    st.warning("⚠️ No document extracted. Go to **Document Extraction** first.")
+    st.warning("Please complete Document Extraction first.")
     st.stop()
 
 if "features_df" not in st.session_state:
-    st.warning("⚠️ Model not run yet. Go to **Risk Assessment** first.")
+    st.warning("Please complete Risk Assessment first.")
     st.stop()
 
 features_df = st.session_state["features_df"]
 prob        = st.session_state.get("prob_default", 0.0)
 tier        = st.session_state.get("risk_tier", "Unknown")
 
-# ── Load model + compute SHAP ─────────────────────────────────────────────────
 with st.spinner("Computing SHAP values..."):
     try:
         predictor = RiskModelPredictor(
@@ -79,8 +76,7 @@ with st.spinner("Computing SHAP values..."):
         )
         model = predictor.model
 
-        # ── Align features_df to exactly the columns the model was trained on ──
-        # FeatureEngineer produces 129 cols (includes leakage); model expects 123.
+        # Align features_df to exactly the columns the model was trained on
         if hasattr(model, "feature_names_in_"):
             model_cols = list(model.feature_names_in_)
         elif hasattr(model, "get_booster") and model.get_booster().feature_names:
@@ -88,7 +84,6 @@ with st.spinner("Computing SHAP values..."):
         else:
             model_cols = predictor.expected_features
 
-        # Add any missing columns as 0, drop any extra columns, reorder
         for col in model_cols:
             if col not in features_df.columns:
                 features_df[col] = 0.0
@@ -97,18 +92,15 @@ with st.spinner("Computing SHAP values..."):
         explainer   = shap.TreeExplainer(model)
         shap_values = explainer(shap_input_df)
 
-        # base_values can be 1D or 2D for binary classification
         bv = shap_values.base_values
         base_val = float(bv[0, 1] if bv.ndim == 2 else bv[0])
 
-        # shap values can be 3D [n_samples, n_features, n_classes] for binary XGB
         sv = shap_values.values
         shap_vec = sv[0, :, 1] if sv.ndim == 3 else sv[0]
 
         feat_names = shap_input_df.columns.tolist()
         feat_vals  = shap_input_df.iloc[0].tolist()
 
-        # Build sorted driver list
         pairs = sorted(
             zip(feat_names, feat_vals, shap_vec),
             key=lambda x: abs(x[2]),
@@ -120,7 +112,6 @@ with st.spinner("Computing SHAP values..."):
         drivers    = [(n, v, s) for n, v, s in top_pairs if s > 0]
         mitigators = [(n, v, s) for n, v, s in top_pairs if s <= 0]
 
-        # Save for report page
         if "shap_factors" not in st.session_state:
             st.session_state["shap_factors"] = {
                 "base_value":   base_val,
@@ -135,35 +126,31 @@ with st.spinner("Computing SHAP values..."):
             }
             st.switch_page("pages/04_Explainability.py")
     except Exception as e:
-        st.error(f"SHAP computation error: {e}")
+        st.error(f"SHAP error: {e}")
         import traceback
         st.code(traceback.format_exc())
         st.stop()
 
-# ── Waterfall chart ───────────────────────────────────────────────────────────
-st.subheader("SHAP Waterfall Chart")
-st.caption("Red bars push the risk score up; green bars push it down.")
+st.subheader("Waterfall Chart")
+st.caption("Red bars increase the risk score. Green bars reduce it.")
 
-with st.spinner("Rendering chart..."):
+with st.spinner("Rendering..."):
     try:
         fig, ax = plt.subplots(figsize=(10, 6))
         fig.patch.set_facecolor("#fafbfc")
         ax.set_facecolor("#fafbfc")
-        # Slice to class 1 (default) if the Explanation object is 3-dimensional
         exp_slice = shap_values[0, :, 1] if shap_values.values.ndim == 3 else shap_values[0]
         shap.plots.waterfall(exp_slice, max_display=15, show=False)
         plt.tight_layout()
         st.pyplot(fig)
         plt.close()
     except Exception as e:
-        st.warning(f"Waterfall chart could not render: {e}. Showing table view below.")
+        st.warning(f"Chart could not render: {e}")
         plt.close("all")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Driver / Mitigator tables ─────────────────────────────────────────────────
 col_d, col_m = st.columns(2)
-
 MAX_BAR = max(abs(s) for _, _, s in top_pairs) if top_pairs else 1
 
 def _bar(shap_val: float, max_val: float) -> str:
@@ -172,7 +159,7 @@ def _bar(shap_val: float, max_val: float) -> str:
     return f'<div class="bar-fill {cls}" style="width:{width}px;"></div>'
 
 with col_d:
-    st.markdown('<div class="info-card"><h4>Top Risk Drivers</h4>', unsafe_allow_html=True)
+    st.markdown('<div class="info-card"><h4>Risk Drivers</h4>', unsafe_allow_html=True)
     if drivers:
         for name, val, shap_val in sorted(drivers, key=lambda x: -x[2])[:8]:
             display_val = f"{val:.2f}" if isinstance(val, float) else str(val)
@@ -184,11 +171,11 @@ with col_d:
               <div class="driver-shap shap-pos">+{shap_val:.4f}</div>
             </div>""", unsafe_allow_html=True)
     else:
-        st.markdown('<p style="color:#888;padding:12px;">No positive drivers found.</p>', unsafe_allow_html=True)
+        st.markdown('<p style="color:#888;padding:12px;">None found.</p>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with col_m:
-    st.markdown('<div class="info-card"><h4>Top Mitigators</h4>', unsafe_allow_html=True)
+    st.markdown('<div class="info-card"><h4>Mitigating Factors</h4>', unsafe_allow_html=True)
     if mitigators:
         for name, val, shap_val in sorted(mitigators, key=lambda x: x[2])[:8]:
             display_val = f"{val:.2f}" if isinstance(val, float) else str(val)
@@ -200,20 +187,18 @@ with col_m:
               <div class="driver-shap shap-neg">{shap_val:.4f}</div>
             </div>""", unsafe_allow_html=True)
     else:
-        st.markdown('<p style="color:#888;padding:12px;">No mitigators found.</p>', unsafe_allow_html=True)
+        st.markdown('<p style="color:#888;padding:12px;">None found.</p>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ── Base value explainer ──────────────────────────────────────────────────────
 st.markdown("<br>", unsafe_allow_html=True)
-with st.expander("How to read this chart"):
+with st.expander("How to read this"):
     st.markdown(f"""
-    - **Base value** `{base_val:.4f}`: The model's expected log-odds output across all training samples
-    - **Red bars** (positive SHAP): These features **increased** this applicant's default probability
-    - **Green bars** (negative SHAP): These features **decreased** the default probability
-    - The final prediction `P(default) = {prob:.1%}` is the sum of base value + all SHAP contributions
-    - SHAP values are additive — every feature contribution is accounted for
+    - Base value `{base_val:.4f}` is the model's average output across all training loans
+    - Red bars show features that increased this applicant's default probability
+    - Green bars show features that decreased it
+    - Final prediction: **{prob:.1%}**
     """)
 
 st.markdown("<br>", unsafe_allow_html=True)
-if st.button("Report Generation →", type="primary", use_container_width=True):
+if st.button("Next: Report Generation", type="primary", use_container_width=True):
     st.switch_page("pages/05_Report_Generation.py")

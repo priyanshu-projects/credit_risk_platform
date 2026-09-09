@@ -1,6 +1,5 @@
 """
 02_Risk_Assessment.py
-Run the ML risk model on extracted fields and display the probability of default.
 """
 
 import sys
@@ -25,14 +24,14 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     border-radius: 12px; padding: 28px 32px; margin-bottom: 28px; color: white;
 }
 .page-header h2 { margin: 0; font-size: 1.8rem; font-weight: 700; }
-.page-header p  { margin: 6px 0 0; color: #a8c8f0; font-size: 0.95rem; }
+.page-header p  { margin: 6px 0 0; color: #a8c8f0; font-size: 0.9rem; }
 
 .risk-gauge {
     border-radius: 16px; padding: 36px 24px; text-align: center;
     margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
-.risk-prob  { font-size: 4rem; font-weight: 800; letter-spacing: -2px; line-height: 1; }
-.risk-tier  { font-size: 1.4rem; font-weight: 700; margin-top: 12px; border-radius: 8px; display: inline-block; padding: 4px 20px; }
+.risk-prob { font-size: 4rem; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+.risk-tier { font-size: 1.3rem; font-weight: 700; margin-top: 12px; border-radius: 8px; display: inline-block; padding: 4px 20px; }
 
 .tier-low       { background: #e8f5e9; color: #27ae60; }
 .tier-medium    { background: #fff8e1; color: #f39c12; }
@@ -50,8 +49,8 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 }
 .feature-row:last-child { border-bottom: none; }
 .feature-row:hover { background: #f8fafd; }
-.feat-name  { color: #4a5a6e; font-size: 0.85rem; }
-.feat-val   { color: #1a2744; font-weight: 600; font-size: 0.9rem; }
+.feat-name { color: #4a5a6e; font-size: 0.85rem; }
+.feat-val  { color: #1a2744; font-weight: 600; font-size: 0.9rem; }
 
 .info-card {
     background: white; border-radius: 12px; padding: 20px 24px;
@@ -64,19 +63,17 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 
 st.markdown("""
 <div class="page-header">
-  <h2>📊 Risk Assessment</h2>
-  <p>XGBoost model predicts the probability of default using 123 engineered features.</p>
+  <h2>Risk Assessment</h2>
+  <p>Default probability based on the applicant's financial profile.</p>
 </div>""", unsafe_allow_html=True)
 
-# ── Require extraction ────────────────────────────────────────────────────────
 if "extraction_result" not in st.session_state:
-    st.warning("No document extracted yet. Please go to **Document Extraction** first.")
+    st.warning("Please complete Document Extraction first.")
     st.stop()
 
 extraction_result = st.session_state["extraction_result"]
 fields            = extraction_result.get("fields", {})
 
-# ── Run model ─────────────────────────────────────────────────────────────────
 if "risk_result" not in st.session_state or "features_df" not in st.session_state:
     with st.spinner("Running model..."):
         try:
@@ -116,59 +113,48 @@ else:
     result = st.session_state["risk_result"]
     features_df = st.session_state["features_df"]
 
-prob    = result["probability_of_default"]
-tier    = result["risk_tier"]
+prob     = result["probability_of_default"]
+tier     = result["risk_tier"]
 tier_key = tier.lower().replace(" ", "-")
 
-# ── Gauge display ─────────────────────────────────────────────────────────────
 col_gauge, col_detail = st.columns([1, 1.6])
 
 with col_gauge:
     st.markdown(f"""
     <div class="risk-gauge gauge-{tier_key}">
       <div class="risk-prob">{prob:.1%}</div>
-      <div>
-        <span class="risk-tier tier-{tier_key}">{tier} Risk</span>
-      </div>
+      <div><span class="risk-tier tier-{tier_key}">{tier} Risk</span></div>
     </div>""", unsafe_allow_html=True)
 
-    # Thresholds explainer
-    st.markdown("""
-    <div class="info-card">
-      <h4>Risk Tiers</h4>
-    """, unsafe_allow_html=True)
-
+    st.markdown('<div class="info-card"><h4>Risk Bands</h4>', unsafe_allow_html=True)
     thresholds = [
         ("Low",       "< 10%",  "🟢"),
-        ("Medium",    "10–25%", "🟡"),
-        ("High",      "25–50%", "🟠"),
+        ("Medium",    "10-25%", "🟡"),
+        ("High",      "25-50%", "🟠"),
         ("Very High", "> 50%",  "🔴"),
     ]
     for t_name, t_range, icon in thresholds:
-        active = "font-weight:700;" if t_name == tier else "color:#888;"
+        active = "font-weight:700;" if t_name == tier else "color:#aaa;"
         st.markdown(f'<div class="feature-row"><span class="feat-name" style="{active}">{icon} {t_name}</span><span class="feat-val" style="{active}">{t_range}</span></div>', unsafe_allow_html=True)
-
     st.markdown("</div>", unsafe_allow_html=True)
 
 with col_detail:
-    st.subheader("Application Summary")
-
     display_fields = {
-        "Applicant Name":        fields.get("applicant_name"),
-        "Loan Amount":           f"${fields.get('loan_amount', 0):,.0f}" if fields.get("loan_amount") else None,
-        "Annual Income":         f"${fields.get('annual_income', 0):,.0f}" if fields.get("annual_income") else None,
-        "DTI":                   f"{fields.get('dti', 0):.1f}%" if fields.get("dti") else None,
-        "FICO Score":            f"{fields.get('fico_avg', 0):.0f}" if fields.get("fico_avg") else None,
-        "Interest Rate":         f"{fields.get('interest_rate', 0):.2f}%" if fields.get("interest_rate") else None,
-        "Revolving Utilization": f"{fields.get('revolving_utilization', 0):.1f}%" if fields.get("revolving_utilization") else None,
-        "Employment Length":     fields.get("employment_length"),
-        "Home Ownership":        fields.get("home_ownership"),
-        "Loan Purpose":          fields.get("purpose"),
-        "Term":                  f"{fields.get('term_months', 0):.0f} months" if fields.get("term_months") else None,
-        "Delinquencies (2yr)":   fields.get("delinquencies_2yrs"),
+        "Applicant":         fields.get("applicant_name"),
+        "Loan Amount":       f"${fields.get('loan_amount', 0):,.0f}" if fields.get("loan_amount") else None,
+        "Annual Income":     f"${fields.get('annual_income', 0):,.0f}" if fields.get("annual_income") else None,
+        "DTI":               f"{fields.get('dti', 0):.1f}%" if fields.get("dti") else None,
+        "FICO Score":        f"{fields.get('fico_avg', 0):.0f}" if fields.get("fico_avg") else None,
+        "Interest Rate":     f"{fields.get('interest_rate', 0):.2f}%" if fields.get("interest_rate") else None,
+        "Revolving Util.":   f"{fields.get('revolving_utilization', 0):.1f}%" if fields.get("revolving_utilization") else None,
+        "Employment":        fields.get("employment_length"),
+        "Home Ownership":    fields.get("home_ownership"),
+        "Purpose":           fields.get("purpose"),
+        "Term":              f"{fields.get('term_months', 0):.0f} months" if fields.get("term_months") else None,
+        "Delinquencies":     fields.get("delinquencies_2yrs"),
     }
 
-    st.markdown('<div class="info-card"><h4>Extracted Fields</h4>', unsafe_allow_html=True)
+    st.markdown('<div class="info-card"><h4>Application Details</h4>', unsafe_allow_html=True)
     for label, val in display_fields.items():
         if val is not None:
             st.markdown(f'<div class="feature-row"><span class="feat-name">{label}</span><span class="feat-val">{val}</span></div>', unsafe_allow_html=True)
@@ -177,8 +163,8 @@ with col_detail:
 st.markdown("<br>", unsafe_allow_html=True)
 col_nav1, col_nav2 = st.columns(2)
 with col_nav1:
-    if st.button("Fraud Analysis →", type="secondary", use_container_width=True):
+    if st.button("Fraud Analysis", type="secondary", use_container_width=True):
         st.switch_page("pages/03_Fraud_Analysis.py")
 with col_nav2:
-    if st.button("Explainability (SHAP) →", type="primary", use_container_width=True):
+    if st.button("Explainability", type="primary", use_container_width=True):
         st.switch_page("pages/04_Explainability.py")

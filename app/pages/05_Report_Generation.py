@@ -1,9 +1,7 @@
 """
 05_Report_Generation.py
-Full underwriter report: Rule Engine verdict + LLM narrative + PDF download.
 """
 
-import json
 import sys
 from pathlib import Path
 
@@ -28,7 +26,7 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     border-radius: 12px; padding: 28px 32px; margin-bottom: 28px; color: white;
 }
 .page-header h2 { margin: 0; font-size: 1.8rem; font-weight: 700; }
-.page-header p  { margin: 6px 0 0; color: #f0c87a; font-size: 0.95rem; }
+.page-header p  { margin: 6px 0 0; color: #f0c87a; font-size: 0.9rem; }
 
 .verdict-box {
     border-radius: 16px; padding: 32px 28px; text-align: center;
@@ -39,12 +37,12 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 .verdict-MANUAL_REVIEW { background: linear-gradient(135deg, #d68910, #f1c40f); color: #2c1a00; }
 .verdict-REFER         { background: linear-gradient(135deg, #e67e22, #f39c12); }
 
-.verdict-name { font-size: 2.8rem; font-weight: 800; letter-spacing: -1px; }
-.verdict-sub  { font-size: 0.9rem; opacity: 0.85; margin-top: 4px; }
+.verdict-name { font-size: 2.6rem; font-weight: 800; letter-spacing: -1px; }
+.verdict-sub  { font-size: 0.88rem; opacity: 0.85; margin-top: 6px; }
 
 .rule-tag {
     background: rgba(255,255,255,0.2); border-radius: 6px;
-    padding: 4px 12px; font-size: 0.78rem; font-family: monospace;
+    padding: 3px 10px; font-size: 0.75rem;
     display: inline-block; margin: 3px;
 }
 
@@ -54,46 +52,37 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     margin-bottom: 18px;
 }
 .section-title {
-    color: #1a2744; font-size: 1rem; font-weight: 700;
+    color: #1a2744; font-size: 0.95rem; font-weight: 700;
     margin: 0 0 14px 0; padding-bottom: 10px;
     border-bottom: 2px solid #e8edf4;
+    text-transform: capitalize;
 }
 .section-body {
     color: #3a4a5e; font-size: 0.92rem; line-height: 1.7;
     white-space: pre-wrap;
 }
-.guardrail-strip {
-    background: #fff8e1; border: 1px solid #ffe082;
-    border-radius: 10px; padding: 16px 20px; margin-top: 20px;
-}
-.guardrail-strip p { color: #7a5800; font-size: 0.88rem; margin: 0; }
 
-.input-summary {
-    background: #f8fafd; border-radius: 10px; padding: 16px 20px;
-    border: 1px solid #e0e8f0; margin-bottom: 20px;
-}
-.input-row {
-    display: flex; justify-content: space-between; padding: 6px 0;
+.summary-row {
+    display: flex; justify-content: space-between; padding: 8px 0;
     border-bottom: 1px solid #f0f2f5; font-size: 0.88rem;
 }
-.input-row:last-child { border-bottom: none; }
-.in-key { color: #6b7c93; font-weight: 600; }
-.in-val { color: #1a2744; font-weight: 500; }
+.summary-row:last-child { border-bottom: none; }
+.s-key { color: #6b7c93; }
+.s-val { color: #1a2744; font-weight: 600; }
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown("""
 <div class="page-header">
-  <h2>📝 Report Generation</h2>
-  <p>Credit policy engine routes the application — then the LLM writes the underwriter narrative.</p>
+  <h2>Report Generation</h2>
+  <p>Policy decision and full underwriter narrative.</p>
 </div>""", unsafe_allow_html=True)
 
-# ── Require prior steps ───────────────────────────────────────────────────────
 missing = []
 if "extraction_result" not in st.session_state: missing.append("Document Extraction")
 if "prob_default"       not in st.session_state: missing.append("Risk Assessment")
 if missing:
-    st.warning(f"⚠️ Please complete these steps first: **{', '.join(missing)}**")
+    st.warning(f"Please complete these steps first: {', '.join(missing)}")
     st.stop()
 
 extraction_result = st.session_state["extraction_result"]
@@ -101,21 +90,18 @@ fields            = extraction_result.get("fields", {})
 prob_default      = st.session_state["prob_default"]
 risk_tier         = st.session_state.get("risk_tier", "Medium")
 
-# Use cached fraud report or re-run
 fraud_report = st.session_state.get("fraud_report")
 if fraud_report is None:
     fraud_report = FraudEngine().evaluate(extraction_result)
     st.session_state["fraud_report"] = fraud_report
 
-# Use cached SHAP or default
 shap_factors = st.session_state.get("shap_factors", {
     "base_value": 0.0,
     "risk_drivers": [],
     "mitigators": [],
 })
 
-# ── Run Rule Engine ───────────────────────────────────────────────────────────
-rule_engine  = RuleEngine()
+rule_engine   = RuleEngine()
 rule_decision = rule_engine.evaluate(
     prob_default=prob_default,
     fraud_risk_level=fraud_report.fraud_risk_level,
@@ -125,7 +111,6 @@ st.session_state["rule_decision"] = rule_decision
 
 verdict = rule_decision.verdict
 
-# ── Verdict display ───────────────────────────────────────────────────────────
 col_verdict, col_inputs = st.columns([1, 1.4])
 
 with col_verdict:
@@ -134,7 +119,7 @@ with col_verdict:
         "AUTO_APPROVE":  "✅",
         "MANUAL_REVIEW": "👤",
         "REFER":         "📋",
-    }.get(verdict, "⚠️")
+    }.get(verdict, "")
 
     tags_html = " ".join(
         f'<span class="rule-tag">{r}</span>'
@@ -142,39 +127,33 @@ with col_verdict:
     )
     st.markdown(f"""
     <div class="verdict-box verdict-{verdict}">
-      <div class="verdict-sub">RULE ENGINE DECISION</div>
-      <div class="verdict-name">{verdict_emoji} {verdict.replace("_", " ")}</div>
-      <div class="verdict-sub" style="margin-top:12px;">{rule_decision.rationale[:120]}...</div>
-      <div style="margin-top:14px;">{tags_html}</div>
+      <div class="verdict-name">{verdict_emoji} {verdict.replace("_", " ").title()}</div>
+      <div class="verdict-sub">{rule_decision.rationale[:120]}</div>
+      <div style="margin-top:12px;">{tags_html}</div>
     </div>""", unsafe_allow_html=True)
 
 with col_inputs:
-    st.markdown('<div class="input-summary">', unsafe_allow_html=True)
     rows = {
-        "P(Default)":         f"{prob_default:.2%}",
-        "Risk Tier":          risk_tier,
-        "Fraud Risk Level":   fraud_report.fraud_risk_level,
-        "FICO Score":         str(fields.get("fico_avg", "N/A")),
-        "DTI":                f"{fields.get('dti', 0):.1f}%" if fields.get("dti") else "N/A",
-        "Loan Amount":        f"${fields.get('loan_amount', 0):,.0f}" if fields.get("loan_amount") else "N/A",
+        "Default Probability": f"{prob_default:.2%}",
+        "Risk Tier":           risk_tier,
+        "Fraud Level":         fraud_report.fraud_risk_level,
+        "FICO Score":          str(fields.get("fico_avg", "N/A")),
+        "DTI":                 f"{fields.get('dti', 0):.1f}%" if fields.get("dti") else "N/A",
+        "Loan Amount":         f"${fields.get('loan_amount', 0):,.0f}" if fields.get("loan_amount") else "N/A",
     }
     for k, v in rows.items():
-        st.markdown(f'<div class="input-row"><span class="in-key">{k}</span><span class="in-val">{v}</span></div>', unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown(f'<div class="summary-row"><span class="s-key">{k}</span><span class="s-val">{v}</span></div>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Generate LLM report ───────────────────────────────────────────────────────
-st.subheader("📄 Underwriter Report")
-
-generate_btn = st.button("Generate Underwriter Report", type="primary", use_container_width=True)
+generate_btn = st.button("Generate Report", type="primary", use_container_width=True)
 
 if "llm_report" in st.session_state:
-    generate_btn = True  # Auto-show if already generated
+    generate_btn = True
 
 if generate_btn:
     if "llm_report" not in st.session_state:
-        with st.spinner("✍️ Generating underwriter report with Gemini Flash..."):
+        with st.spinner("Generating report..."):
             try:
                 generator = LLMReportGenerator()
                 report    = generator.generate(
@@ -187,49 +166,44 @@ if generate_btn:
                 )
                 st.session_state["llm_report"] = report
             except Exception as e:
-                st.error(f"Report generation error: {e}")
+                st.error(f"Report generation failed: {e}")
                 st.stop()
 
     report = st.session_state["llm_report"]
 
-    # ── Display sections ──────────────────────────────────────────────────────
+    st.caption(f"{report.llm_provider} | {report.report_timestamp}")
+
     section_icons = {
-        "APPLICANT OVERVIEW":          "👤",
-        "RISK MODEL ANALYSIS":         "📊",
-        "FRAUD & ANOMALY ASSESSMENT":  "🚨",
-        "ROUTING DECISION SUMMARY":    "🔀",
+        "APPLICANT OVERVIEW":         "👤",
+        "RISK MODEL ANALYSIS":        "📊",
+        "FRAUD & ANOMALY ASSESSMENT": "🚨",
+        "ROUTING DECISION SUMMARY":   "🔀",
     }
 
-    st.caption(f"Generated by: **{report.llm_provider}** | {report.report_timestamp}")
-
     for title, content in report.sections.items():
-        icon = section_icons.get(title, "📋")
+        icon = section_icons.get(title, "")
+        display_title = title.title()
         st.markdown(f"""
         <div class="section-block">
-          <div class="section-title">{icon} {title}</div>
+          <div class="section-title">{icon} {display_title}</div>
           <div class="section-body">{content}</div>
         </div>""", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── PDF download ──────────────────────────────────────────────────────────
-    st.subheader("💾 Download PDF Report")
-
     col_dl, col_info = st.columns([1, 1.5])
 
     with col_dl:
-        if st.button("Generate PDF", type="secondary", use_container_width=True):
-            with st.spinner("Rendering PDF..."):
+        if st.button("Download PDF", type="secondary", use_container_width=True):
+            with st.spinner("Generating PDF..."):
                 try:
-                    renderer = PDFReportRenderer()
+                    renderer  = PDFReportRenderer()
                     applicant = (fields.get("applicant_name") or "unknown").replace(" ", "_")
                     pdf_path  = f"artifacts/reports/underwriter_{applicant}.pdf"
                     saved     = renderer.save(report, pdf_path, rule_verdict=verdict)
-                    st.success(f"✅ PDF saved to: `{saved}`")
-
                     with open(saved, "rb") as f:
                         st.download_button(
-                            label="⬇️ Download PDF",
+                            label="Download",
                             data=f.read(),
                             file_name=Path(saved).name,
                             mime="application/pdf",
@@ -239,8 +213,7 @@ if generate_btn:
                     st.error(f"PDF error: {e}")
 
     with col_info:
-        st.markdown("PDF includes all four report sections with a colour-coded verdict badge.")
+        st.caption("PDF includes all four sections with colour-coded verdict.")
 
-    # ── Raw JSON ──────────────────────────────────────────────────────────────
-    with st.expander("🔎 Raw report JSON"):
+    with st.expander("Raw JSON"):
         st.json(report.to_dict())
